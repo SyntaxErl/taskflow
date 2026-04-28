@@ -135,14 +135,13 @@ export default function Register() {
         <div className="absolute bottom-10 left-6 w-10 h-10 rounded-full opacity-15 animate-float-delay bg-violet-600" />
         <div className="absolute top-1/3 left-4 w-6 h-6 rounded-full opacity-20 animate-float bg-indigo-600" />
         
-        {/* Mobile header logo — outside the card */}
-        <div className="flex items-center gap-2 mb-6 md:hidden w-full max-w-md">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center shadow"
-            style={{ backgroundColor: '#5b4fcf' }}
-          >
-            <span className="material-icons text-white" style={{ fontSize: '20px' }}>check</span>
-          </div>
+        {/* Mobile header logo */}
+        <div className="fixed top-4 left-4 flex items-center gap-2 md:hidden z-50">
+          <img
+            src="/src/assets/images/logo.png"
+            alt="Logo"
+            className="w-8 h-8 rounded-lg object-contain"
+          />
           <span className="font-bold text-xl" style={{ color: '#5b4fcf' }}>TaskFlow</span>
         </div>
 
@@ -235,7 +234,7 @@ export default function Register() {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="flex-1 outline-none text-sm text-gray-700 bg-transparent placeholder-gray-400"
+                  className="flex-1 outline-none text-sm text-gray-700 bg-transparent placeholder-gray-400 w-full"
                 />
                 <button
                   type="button"
@@ -288,7 +287,7 @@ export default function Register() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  className="flex-1 outline-none text-sm text-gray-700 bg-transparent placeholder-gray-400"
+                  className="flex-1 outline-none text-sm text-gray-700 bg-transparent placeholder-gray-400 w-full"
                 />
                 <button
                   type="button"
