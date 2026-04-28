@@ -98,8 +98,8 @@ export default function Login() {
         <div className="absolute top-1/3 left-4 w-6 h-6 rounded-full opacity-20 animate-float bg-indigo-600" />
 
         {/* Mobile logo */}
-        <div className="flex items-center gap-2 mb-6 md:hidden w-full max-w-md">
-           <img
+        <div className="fixed top-4 left-4 flex items-center gap-2 md:hidden z-50">
+          <img
             src="/src/assets/images/logo.png"
             alt="Logo"
             className="w-8 h-8 rounded-lg object-contain"
@@ -174,7 +174,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="flex-1 outline-none text-sm text-gray-700 bg-transparent placeholder-gray-400"
+                  className="flex-1 outline-none text-sm text-gray-700 bg-transparent placeholder-gray-400 w-full"
                 />
                 <button
                   type="button"

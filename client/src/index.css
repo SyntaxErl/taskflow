@@ -43,3 +43,20 @@
 .animate-float-delay {
   animation: float 4s ease-in-out 1s infinite;
 }
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #EEF2FF;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #818CF8;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4338CA;
+}
