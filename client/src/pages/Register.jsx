@@ -80,12 +80,11 @@ export default function Register() {
 
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: '#5b4fcf' }}
-          >
-            <span className="material-icons text-white" style={{ fontSize: '18px' }}>check</span>
-          </div>
+           <img
+            src="/src/assets/images/logo.png"
+            alt="Logo"
+            className="w-8 h-8 rounded-lg object-contain"
+          />
           <span className="font-bold text-lg" style={{ color: '#5b4fcf' }}>TaskFlow</span>
         </div>
 
