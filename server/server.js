@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./src/config/db');
 const authRoutes = require('./src/routes/auth.routes');
+const taskRoutes = require('./src/routes/task.routes');
 
 const app = express();
 
@@ -10,8 +11,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes (we add more later)
+// Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/tasks', taskRoutes);
 
 
 
