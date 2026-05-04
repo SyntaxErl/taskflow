@@ -1,17 +1,37 @@
 # TaskFlow
 
-A modern, responsive, and fully functional task management web application built from scratch. TaskFlow provides a complete flow for creating, organizing, and tracking tasks — with a clean and intuitive UI inspired by tools like Notion and Trello.
+A modern, responsive, and fully functional task management web application built from scratch. TaskFlow is designed to help individuals and teams organize their work, track productivity, and collaborate seamlessly — with a clean and intuitive UI inspired by tools like Notion and Trello.
+
+## What is TaskFlow?
+
+TaskFlow is a full-stack productivity platform that allows users to:
+- Create and manage tasks with priorities, categories, and due dates
+- Visualize tasks in a list view or Kanban board
+- Track productivity through analytics and charts
+- Collaborate with team members by assigning tasks and sharing boards
+- Stay on top of deadlines through smart notifications
+- View tasks on a calendar to never miss a due date
+
+Whether you are managing personal to-dos, school projects, work assignments, or team sprints — TaskFlow keeps everything organized in one place.
 
 ## Features
 
 * **User Authentication:** Full support for creating new accounts and signing in with existing credentials, complete with form validation, password strength indicator, and secure bcrypt password hashing.
 * **JWT Protected Routes:** Token-based authentication using JSON Web Tokens stored in localStorage, with protected routes that automatically redirect unauthenticated users to the login page.
-* **Task Management:** Complete CRUD system for tasks with title, description, status, priority, category, due date, and assignee fields.
+* **Task Management:** Complete CRUD system for tasks with title, description, status (Todo / In Progress / Done), priority (Low / Medium / High), category, due date, and assignee fields.
 * **Advanced Filtering & Search:** Filter tasks by status, priority, and category. Sort by due date or priority. Search tasks by title in real time.
 * **Bulk Actions:** Select multiple tasks and mark as done, change priority, or delete all at once.
-* **Dashboard:** Overview cards showing total, completed, pending, and overdue task counts with weekly activity charts and category breakdown.
-* **State Management:** Global authentication and task state managed with Zustand, persisted across page refreshes via localStorage.
-* **Polished UI/UX:** Built with Tailwind CSS, featuring subtle animations, floating decorative elements, password strength bars, loading indicators, and Material Icons.
+* **Kanban Board:** Trello-style drag and drop board with three columns — Todo, In Progress, and Done — for a visual overview of all tasks.
+* **Task Details:** Each task has a dedicated details view showing subtasks with a progress bar, a comment thread for discussion, and a full activity log tracking every change made.
+* **Dashboard:** Overview cards showing total, completed, pending, and overdue task counts with weekly activity bar chart and tasks by category donut chart.
+* **Calendar View:** Monthly calendar showing tasks by due date. Click any day to see tasks due that day with their status.
+* **Analytics:** Detailed productivity charts including completion rate over time, tasks by priority, tasks by category, weekly performance score, and insights and trends.
+* **Notifications:** In-app notification system for task due today alerts, overdue alerts, comment mentions, task assignments, and team activity updates.
+* **User Profile & Settings:** Update name, email, bio, avatar, theme preference (Light / Dark / System), and notification preferences all from one settings page.
+* **Team Collaboration:** Invite team members by email, assign tasks to specific members, manage roles (Admin / Member), and track team activity across shared tasks.
+* **Activity Log:** Every action on a task is recorded — who created it, who changed the status, who commented, who updated the due date.
+* **Responsive Design:** Fully responsive layout that works on both desktop and mobile. Sidebar collapses on mobile with a clean card-based UI throughout.
+* **Polished UI/UX:** Built with Tailwind CSS featuring subtle page load animations, floating decorative elements, password strength bars, loading spinners, empty state screens, and Material Icons.
 
 ## Tech Stack
 
@@ -95,7 +115,7 @@ Frontend runs on `http://localhost:5173`
 
 ## Project Structure
 
-* `client/src/pages/` — One file per screen (Login, Register, Dashboard, MyTasks, etc.)
+* `client/src/pages/` — One file per screen (Login, Register, Dashboard, MyTasks, Board, Calendar, Analytics, Notifications, Profile, Team, Settings)
 * `client/src/components/` — Reusable UI components (Sidebar, Navbar, TaskCard, ProtectedRoute)
 * `client/src/store/` — Zustand global state (authStore, taskStore)
 * `client/src/api/axios.js` — Axios instance with base URL configuration
@@ -107,4 +127,8 @@ Frontend runs on `http://localhost:5173`
 
 ## Project Status
 
-🚧 Currently in active development
+🚧 Currently in active development — building Phase 4 (Task System Frontend)
+
+## Developer
+
+**Erl** — Built as a learning project to practice full-stack web development using React, Node.js, Express, and MySQL.
