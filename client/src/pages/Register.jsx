@@ -134,16 +134,6 @@ export default function Register() {
         <div className="absolute top-6 right-6 w-16 h-16 rounded-full opacity-20 animate-float bg-indigo-600" />
         <div className="absolute bottom-10 left-6 w-10 h-10 rounded-full opacity-15 animate-float-delay bg-violet-600" />
         <div className="absolute top-1/3 left-4 w-6 h-6 rounded-full opacity-20 animate-float bg-indigo-600" />
-        
-        {/* Mobile header logo */}
-        <div className="fixed top-4 left-4 flex items-center gap-2 md:hidden z-50">
-          <img
-            src="/src/assets/images/logo.png"
-            alt="Logo"
-            className="w-8 h-8 rounded-lg object-contain"
-          />
-          <span className="font-bold text-xl" style={{ color: '#5b4fcf' }}>TaskFlow</span>
-        </div>
 
         {/* Card */}
         <div className="w-full max-w-md bg-purple-50 rounded-2xl shadow-lg p-8 animate-fadeInUp">
