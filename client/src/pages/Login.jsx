@@ -100,7 +100,7 @@ export default function Login() {
         <div className="absolute top-1/3 left-4 w-6 h-6 rounded-full opacity-20 animate-float bg-indigo-600" />
 
         {/* Mobile logo */}
-        <div className="fixed top-4 left-4 flex items-center gap-2 md:hidden z-50">
+        <div className="flex items-center gap-2 md:hidden mb-6">
           <img
             src={logo}
             alt="Logo"
