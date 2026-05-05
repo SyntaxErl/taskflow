@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
 import useAuthStore from '../store/authStore'
@@ -15,6 +15,14 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+// Inside the component
+useEffect(() => {
+  document.body.style.backgroundColor = '#f3e8ff'
+  return () => {
+    document.body.style.backgroundColor = '#ffffff'
+  }
+}, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
