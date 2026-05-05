@@ -28,6 +28,11 @@ const getTasks = async (req, res) => {
       params.push(`%${search}%`);
     }
 
+    if (req.query.due_date) {
+      query += " AND due_date = ?";
+      params.push(req.query.due_date);
+    }
+
     if (sort === "due_date") {
       query += " ORDER BY due_date ASC";
     } else if (sort === "priority") {

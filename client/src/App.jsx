@@ -11,9 +11,30 @@ import Analytics from './pages/Analytics'
 import Profile from './pages/Profile'
 import Team from './pages/Team'
 import Notifications from './pages/Notifications'
-import Settings from './pages/Settings'
+import { useEffect } from 'react'
+import useAuthStore from './store/authStore'
+import api from './api/axios'
 
 export default function App() {
+  const { token, login, logout } = useAuthStore()
+
+  useEffect(() => {
+    const restoreUser = async () => {
+      if (!token) return
+
+      try {
+        const res = await api.get('/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        login(res.data.user, token)
+      } catch (error) {
+        logout()
+      }
+    }
+
+    restoreUser()
+  }, [])
+  
   return (
     <BrowserRouter>
       <Routes>
@@ -37,7 +58,7 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/team" element={<Team />} />
           <Route path="/notifications" element={<Notifications />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings" element={<Navigate to="/profile" />} />
         </Route>
 
         {/* Catch all — redirect to dashboard */}
