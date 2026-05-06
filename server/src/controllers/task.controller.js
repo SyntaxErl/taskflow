@@ -277,4 +277,65 @@ const bulkAction = async (req, res) => {
   }
 };
 
-module.exports = { getTasks, createTask, updateTask, deleteTask, bulkAction };
+const getDashboard = async (req, res) => {
+  const userId = req.user.userId;
+
+  try {
+    const today = new Date().toISOString().split("T")[0];
+
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) as total FROM tasks WHERE user_id = ?`,
+      [userId],
+    );
+
+    const [[{ completed }]] = await db.query(
+      `SELECT COUNT(*) as completed FROM tasks WHERE user_id = ? AND status = "done"`,
+      [userId],
+    );
+
+    const [[{ pending }]] = await db.query(
+      'SELECT COUNT(*) as pending FROM tasks WHERE user_id = ? AND status != "done"',
+      [userId],
+    );
+
+    const [[{ overdue }]] = await db.query(
+      'SELECT COUNT(*) as overdue FROM tasks WHERE user_id = ? AND due_date < ? AND status != "done"',
+      [userId, today],
+    );
+
+    const [recentTasks] = await db.query(
+      "SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at DESC LIMIT 5",
+      [userId],
+    );
+
+    const [byCategory] = await db.query(
+      "SELECT category, COUNT(*) as count FROM tasks WHERE user_id = ? GROUP BY category",
+      [userId],
+    );
+
+    const [weeklyActivity] = await db.query(
+      `SELECT DAYNAME(created_at) as day, COUNT(*) as count 
+       FROM tasks 
+       WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+       GROUP BY DAYNAME(created_at), DAYOFWEEK(created_at)
+       ORDER BY DAYOFWEEK(created_at)`,
+      [userId],
+    );
+
+    res.json({
+      success: true,
+      stats: { total, completed, pending, overdue },
+      recentTasks,
+      byCategory,
+      weeklyActivity,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { getTasks, createTask, updateTask, deleteTask, bulkAction, getDashboard };

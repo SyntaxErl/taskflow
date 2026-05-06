@@ -16,7 +16,6 @@ export default function Register() {
     confirmPassword: "",
   });
 
-  // Inside the component
   useEffect(() => {
     document.body.style.backgroundColor = "#f3e8ff";
     return () => {
