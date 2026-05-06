@@ -16,7 +16,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Inside the component
   useEffect(() => {
     document.body.style.backgroundColor = "#f3e8ff";
     return () => {

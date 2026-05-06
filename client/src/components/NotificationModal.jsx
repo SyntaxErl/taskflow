@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const timeAgo = (ts) => {
   const diff = Math.floor((Date.now() - new Date(ts)) / 1000);
   if (diff < 60) return "just now";
@@ -19,7 +17,6 @@ const TYPE_ICON = {
   default: { icon: "notifications", color: "#6b7280" },
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function NotificationModal({ onClose, onCountChange }) {
   const navigate = useNavigate();

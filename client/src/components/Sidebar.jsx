@@ -100,7 +100,7 @@ className={`
                   to={item.path}
                   onClick={handleNavClick}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                    `flex items-center gap-4 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-500
                     ${
                       isActive
                         ? "text-purple-700 bg-purple-50"
