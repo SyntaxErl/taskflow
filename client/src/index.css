@@ -16,7 +16,7 @@
 }
 
 .animate-fadeInUp {
-  animation: fadeInUp 1.5s ease forwards;
+  animation: fadeInUp 0.5s ease forwards;
 }
 
 .animate-fadeInUp-delay {

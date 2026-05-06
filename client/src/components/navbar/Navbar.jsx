@@ -67,11 +67,11 @@ export default function Navbar({ onMenuClick }) {
 
   return (
     <header
-      className="bg-white border-b border-gray-100"
+      className="bg-white border-b border-gray-100 shadow-sm"
       style={{ fontFamily: "Inter, sans-serif" }}
     >
       {/* ── Main row ── */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 gap-3">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 gap-3 ">
 
         {/* Left — hamburger + page title */}
         <div className="flex items-center gap-3 min-w-0">

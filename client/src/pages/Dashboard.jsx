@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DashboardSkeleton from "../components/DashboardSkeleton";
 import api from "../api/axios";
 
 export default function Dashboard() {
@@ -20,22 +21,7 @@ export default function Dashboard() {
     fetchStats();
   }, []);
 
-  if (loading)
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="flex flex-col items-center gap-3">
-          <span
-            className="material-icons animate-spin text-purple-500"
-            style={{ fontSize: "40px" }}
-          >
-            autorenew
-          </span>
-          <p className="text-sm text-gray-400 font-medium">
-            Loading dashboard...
-          </p>
-        </div>
-      </div>
-    );
+  if (loading) return <DashboardSkeleton />;
 
   return (
     <div className="p-6" style={{ fontFamily: "Inter, sans-serif" }}>
