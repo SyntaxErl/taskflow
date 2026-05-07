@@ -1,10 +1,18 @@
 import { useState, useEffect } from "react";
 import DashboardSkeleton from "../components/DashboardSkeleton";
+import useTaskStore from "../store/taskStore";
 import api from "../api/axios";
 
 export default function Dashboard() {
+  const { dashboardStats, dashboardLoading, fetchDashboardStats } =
+    useTaskStore();
+
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
