@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api/axios";
+import { loginUser } from '../services/authService'
 import useAuthStore from "../store/authStore";
 import logo from "../assets/images/logo.png";
 import loginImg from "../assets/images/login.png";
@@ -28,7 +28,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      const res = await api.post("/auth/login", { email, password });
+      const res = await loginUser(email, password);
       login(res.data.user, res.data.token);
       navigate("/dashboard");
     } catch (err) {
