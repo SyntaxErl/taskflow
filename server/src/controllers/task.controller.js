@@ -4,48 +4,61 @@ const getTasks = async (req, res) => {
   const userId = req.user.userId;
   const { status, priority, category, sort, search } = req.query;
 
+  // 1. Extract pagination parameters
+  const limit = parseInt(req.query.limit) || 10;
+  const page = parseInt(req.query.page) || 1;
+  const offset = (page - 1) * limit;
+
   try {
-    let query = "SELECT * FROM tasks WHERE user_id = ?";
+    // 2. Build the shared WHERE clause and params
+    let baseWhere = "WHERE user_id = ?";
     let params = [userId];
 
     if (status) {
-      query += " AND status = ?";
+      baseWhere += " AND status = ?";
       params.push(status);
     }
-
     if (priority) {
-      query += " AND priority = ?";
+      baseWhere += " AND priority = ?";
       params.push(priority);
     }
-
     if (category) {
-      query += " AND category = ?";
+      baseWhere += " AND category = ?";
       params.push(category);
     }
-
     if (search) {
-      query += " AND title LIKE ?";
+      baseWhere += " AND title LIKE ?";
       params.push(`%${search}%`);
     }
-
     if (req.query.due_date) {
-      query += " AND due_date = ?";
+      baseWhere += " AND due_date = ?";
       params.push(req.query.due_date);
     }
 
-    if (sort === "due_date") {
-      query += " ORDER BY due_date ASC";
-    } else if (sort === "priority") {
-      query += " ORDER BY priority DESC";
-    } else {
-      query += " ORDER BY created_at DESC";
-    }
+    // 3. Get total count using the same filters
+    const [[{ totalCount }]] = await db.query(
+      `SELECT COUNT(*) as totalCount FROM tasks ${baseWhere}`,
+      params,
+    );
 
-    const [tasks] = await db.query(query, params);
+    // 4. Determine Sort Order
+    let orderBy = "ORDER BY created_at DESC";
+    if (sort === "due_date") orderBy = "ORDER BY due_date ASC";
+    if (sort === "priority") orderBy = "ORDER BY priority DESC";
 
+    // 5. Execute main query with pagination
+    const [tasks] = await db.query(
+      `SELECT * FROM tasks ${baseWhere} ${orderBy} LIMIT ? OFFSET ?`,
+      [...params, limit, offset],
+    );
+
+    // 6. Return response with total
     res.json({
       success: true,
       tasks,
+      total: totalCount,
+      page,
+      limit,
     });
   } catch (error) {
     res.status(500).json({
@@ -322,12 +335,22 @@ const getDashboard = async (req, res) => {
       [userId],
     );
 
+    // Last week total for growth comparison
+    const [[{ lastWeekTotal }]] = await db.query(
+      `SELECT COUNT(*) as lastWeekTotal FROM tasks
+       WHERE user_id = ?
+       AND created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
+       AND created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)`,
+      [userId],
+    );
+
     res.json({
       success: true,
       stats: { total, completed, pending, overdue },
       recentTasks,
       byCategory,
       weeklyActivity,
+      lastWeekTotal,
     });
   } catch (error) {
     res.status(500).json({
@@ -338,4 +361,11 @@ const getDashboard = async (req, res) => {
   }
 };
 
-module.exports = { getTasks, createTask, updateTask, deleteTask, bulkAction, getDashboard };
+module.exports = {
+  getTasks,
+  createTask,
+  updateTask,
+  deleteTask,
+  bulkAction,
+  getDashboard,
+};
