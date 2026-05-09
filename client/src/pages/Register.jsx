@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../api/axios";
+import { registerUser } from '../services/authService'
 import useAuthStore from "../store/authStore";
 import logo from "../assets/images/logo.png";
 import registerImg from "../assets/images/register.png";
@@ -66,11 +66,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const res = await api.post("/auth/register", {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-      });
+      const res = await registerUser(formData.name, formData.email, formData.password);
       login(res.data.user, res.data.token);
       navigate("/dashboard");
     } catch (err) {
