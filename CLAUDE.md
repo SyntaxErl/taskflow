@@ -197,7 +197,8 @@ Vinette/
 - **authStore** — holds `user`, `token`, `isAuthenticated`. Token is persisted to `localStorage` on login and cleared on logout. App restores session on mount by calling `GET /auth/me`.
 - **taskStore** — holds:
   - `dashboardStats` — cached; cleared (`clearDashboardStats`) after any task mutation so Dashboard re-fetches on next visit.
-  - `taskVersion` — integer counter; `MyTasks` watches it and re-fetches when incremented. Call `incrementTaskVersion()` after any task mutation.
+  - `taskVersion` — integer counter; `MyTasks` **and** `BoardView` watch it and re-fetch when incremented. Call `incrementTaskVersion()` after **any** task mutation (create, edit, delete, bulk, **and Kanban drag**) — it is the single cross-view invalidation signal.
+  - `boardCache` / `tasksCache` — last fetched result for `BoardView` / `MyTasks`, tagged `{ key, version }` (`key` = JSON of filter/sort/page params, `version` = `taskVersion` at fetch time). The page seeds its state from the cache on mount and **skips the network call** when both still match (same filters AND no mutation since) — same idea as `dashboardStats`. Any `incrementTaskVersion()` implicitly invalidates them (version mismatch); no explicit clear needed. Read imperatively via `useTaskStore.getState()` so the cache never becomes a hook dep / refetch trigger.
   - `isNewTaskModalOpen` / `selectedTaskId` — modal visibility state.
 
 ---
@@ -224,6 +225,45 @@ Built feature by feature. Update this list whenever a feature ships.
 ---
 
 ## Session Log
+
+### 2026-05-16 — Board/MyTasks revisit caching + Kanban skeleton
+
+**Done:**
+- Added `boardCache` / `tasksCache` to `taskStore` (tagged `{ key, version }`).
+  `BoardView` and `useTasks` now seed state from the cache on mount and skip the
+  fetch on revisit when filters + `taskVersion` are unchanged — mirrors the
+  existing `dashboardStats` "skip fetch if loaded" pattern. No spinner/skeleton
+  flash when navigating back with no changes.
+- `BoardView.onDragEnd` now calls `incrementTaskVersion()` (previously only
+  `clearDashboardStats()`) and re-writes `boardCache` under the new version, so
+  the moved task propagates to MyTasks/Dashboard while the board stays cached.
+- `useTasks` mutation handlers (`bulkAction`, status/priority/delete) switched
+  from a direct `fetchTasks()` to `incrementTaskVersion()` — required now that
+  the cache exists (a direct refetch would hit the still-valid cache and return
+  stale rows); the version bump invalidates it and triggers one fresh fetch.
+- New `components/BoardSkeleton.jsx` (filter bar + 3 columns of card
+  placeholders, `animate-pulse`, styled like `DashboardSkeleton`); `BoardView`
+  renders it instead of the spinning `autorenew` icon while loading.
+
+**Note:** pre-existing `react-hooks/set-state-in-effect` lint errors on the
+unchanged `useEffect(() => { fetchX() }, [fetchX])` lines remain — not in scope.
+
+**Verify next session (needs backend + frontend running, manual test):**
+- Board: load → navigate away → back → **no skeleton, no network call** (check
+  Network tab). Change a category/sort filter → it refetches. Drag a card →
+  open MyTasks → moved task shows new status. Edit/delete a task in MyTasks →
+  revisit Board → change is reflected. Full page reload → fetches fresh (cache
+  is in-memory only, by design).
+- Confirm `BoardSkeleton` matches the real board layout (no layout jump when
+  the real data swaps in).
+
+**Next task:** Calendar View — still the next unchecked item in Feature
+Progress. The caching/skeleton work above was an enhancement, not a checklist
+feature, so nothing to tick off. Start fresh on `client/src/pages/Calendar.jsx`
+(monthly view, tasks placed by `due_date`, `react-big-calendar`). When wiring
+its data fetch, reuse the same `taskVersion` + cache-tag pattern (see the
+`boardCache`/`tasksCache` notes under State Management Patterns) so Calendar
+also skips refetch on revisit.
 
 ### 2026-05-16 — Task Detail Modal fixes + Details Edit/Apply
 
