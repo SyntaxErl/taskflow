@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -c src/controllers/task.controller.js)"
+      "Bash(node -c src/controllers/task.controller.js)",
+      "Bash(npx eslint *)"
     ]
   }
 }

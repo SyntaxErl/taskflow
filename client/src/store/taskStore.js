@@ -28,6 +28,20 @@ const useTaskStore = create((set, get) => ({
   incrementTaskVersion: () =>
     set((state) => ({ taskVersion: state.taskVersion + 1 })),
 
+  // ── View caches ────────────────────────────────────────────────────────────
+  // Same idea as dashboardStats: keep the last fetched result in the store so
+  // the page can skip the network call when revisited. Each cache is tagged
+  // with { key, version }:
+  //   key     — JSON of the filter/sort/page params it was fetched with
+  //   version — taskVersion at fetch time
+  // A revisit reuses the cache only when both still match (same filters AND no
+  // task mutation since). Any incrementTaskVersion() invalidates it implicitly.
+  boardCache: null, // { key, version, columns }
+  setBoardCache: (cache) => set({ boardCache: cache }),
+
+  tasksCache: null, // { key, version, tasks, total }
+  setTasksCache: (cache) => set({ tasksCache: cache }),
+
   // ── New Task Modal ─────────────────────────────────────────────────────────
   isNewTaskModalOpen: false,
   openNewTaskModal: () => set({ isNewTaskModalOpen: true }),

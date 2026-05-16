@@ -3,7 +3,23 @@ import { createPortal } from "react-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { getTasks, updateTask } from "@/services/taskService";
 import useTaskStore from "@/store/taskStore";
+import BoardSkeleton from "@/components/BoardSkeleton";
 import { getCategoryColor, getPriorityColor, formatDate, getDaysLeft } from "@/utils/taskHelpers";
+
+// Cache key for the board is just its server-side params (category + sort).
+const boardKey = (category, sort) => JSON.stringify({ category, sort });
+
+// Returns the cached board iff it matches the current filters AND no task has
+// mutated since it was stored. Read imperatively (like dashboard's get()) so it
+// never becomes a hook dependency / refetch trigger.
+const readBoardCache = (category, sort) => {
+  const { boardCache, taskVersion } = useTaskStore.getState();
+  return boardCache &&
+    boardCache.key === boardKey(category, sort) &&
+    boardCache.version === taskVersion
+    ? boardCache
+    : null;
+};
 
 // ─── Column config ─────────────────────────────────────────────────────────────
 const COLUMNS = [
@@ -206,14 +222,18 @@ function KanbanColumn({ column, tasks }) {
 // ─── Main Board ────────────────────────────────────────────────────────────────
 export default function BoardView() {
   const clearDashboardStats    = useTaskStore((s) => s.clearDashboardStats);
+  const incrementTaskVersion   = useTaskStore((s) => s.incrementTaskVersion);
+  const setBoardCache          = useTaskStore((s) => s.setBoardCache);
   const taskVersion            = useTaskStore((s) => s.taskVersion);
 
-  const [columns, setColumns] = useState({
-    todo:        [],
-    in_progress: [],
-    done:        [],
-  });
-  const [loading,     setLoading]     = useState(true);
+  // Seed from cache on mount — revisiting the board with no changes since the
+  // last fetch shows it instantly, no skeleton (filters always start default).
+  const seeded = readBoardCache("", "due_date");
+
+  const [columns, setColumns] = useState(
+    seeded?.columns ?? { todo: [], in_progress: [], done: [] },
+  );
+  const [loading,     setLoading]     = useState(!seeded);
   const [category,    setCategory]    = useState("");
   const [sort,        setSort]        = useState("due_date");
   const [filterOpen,  setFilterOpen]  = useState(false);
@@ -251,6 +271,14 @@ export default function BoardView() {
 
   // ── Fetch all tasks ──────────────────────────────────────────────────────────
   const fetchBoard = useCallback(async () => {
+    // Cache hit — same filters, no task mutation since: reuse, skip the network.
+    const cached = readBoardCache(category, sort);
+    if (cached) {
+      setColumns(cached.columns);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const params = { limit: 200 };
@@ -259,17 +287,23 @@ export default function BoardView() {
       const res = await getTasks(params); // fetch all — no pagination on board
       const all = res.data.tasks || [];
 
-      setColumns({
+      const cols = {
         todo:        all.filter((t) => t.status === "todo"),
         in_progress: all.filter((t) => t.status === "in_progress"),
         done:        all.filter((t) => t.status === "done"),
+      };
+      setColumns(cols);
+      setBoardCache({
+        key: boardKey(category, sort),
+        version: useTaskStore.getState().taskVersion,
+        columns: cols,
       });
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [taskVersion, category, sort]);
+  }, [taskVersion, category, sort, setBoardCache]);
 
   useEffect(() => { fetchBoard(); }, [fetchBoard]);
 
@@ -286,43 +320,42 @@ export default function BoardView() {
     const taskId    = Number(draggableId);
 
     // ── Optimistic update — move card instantly in UI ──────────────────────────
-    setColumns((prev) => {
-      const sourceTasks = [...prev[sourceCol]];
-      const destTasks   = sourceCol === destCol ? sourceTasks : [...prev[destCol]];
+    const sourceTasks = [...columns[sourceCol]];
+    const destTasks   = sourceCol === destCol ? sourceTasks : [...columns[destCol]];
+    const [movedTask] = sourceTasks.splice(source.index, 1);
+    const updatedTask = { ...movedTask, status: destCol };
 
-      const [movedTask] = sourceTasks.splice(source.index, 1);
-      const updatedTask = { ...movedTask, status: destCol };
-
-      if (sourceCol === destCol) {
-        sourceTasks.splice(destination.index, 0, updatedTask);
-        return { ...prev, [sourceCol]: sourceTasks };
-      } else {
-        destTasks.splice(destination.index, 0, updatedTask);
-        return { ...prev, [sourceCol]: sourceTasks, [destCol]: destTasks };
-      }
-    });
+    let next;
+    if (sourceCol === destCol) {
+      sourceTasks.splice(destination.index, 0, updatedTask);
+      next = { ...columns, [sourceCol]: sourceTasks };
+    } else {
+      destTasks.splice(destination.index, 0, updatedTask);
+      next = { ...columns, [sourceCol]: sourceTasks, [destCol]: destTasks };
+    }
+    setColumns(next);
 
     // ── Persist to backend ─────────────────────────────────────────────────────
     try {
       await updateTask(taskId, { status: destCol });
       clearDashboardStats();
+      incrementTaskVersion(); // let MyTasks / Dashboard see the moved task
+      // Re-cache the board under the new version so it stays cached (the
+      // version bump above would otherwise invalidate it and force a refetch).
+      setBoardCache({
+        key: boardKey(category, sort),
+        version: useTaskStore.getState().taskVersion,
+        columns: next,
+      });
     } catch (err) {
       console.error("Failed to update task status:", err);
-      // Revert on failure
+      // Revert on failure — fetchBoard() restores the pre-drag cached columns.
       fetchBoard();
     }
   };
 
   // ── Loading ──────────────────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <span className="material-icons animate-spin text-purple-400" style={{ fontSize: "36px" }}>
-          autorenew
-        </span>
-      </div>
-    );
-  }
+  if (loading) return <BoardSkeleton />;
 
   // ── Board ────────────────────────────────────────────────────────────────────
   return (

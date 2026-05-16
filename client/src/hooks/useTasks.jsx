@@ -4,16 +4,27 @@ import { getTasks, bulkAction as bulkActionService, updateTask, deleteTask } fro
 import useTaskStore from '@/store/taskStore'
 import { PER_PAGE } from '@/constants/taskOptions'
 
+// Cache key for MyTasks is the full set of server-side params.
+const tasksKey = (p) => JSON.stringify(p)
+
+// Returns the cached result iff it matches the current params AND no task has
+// mutated since (taskVersion). Read imperatively so it never triggers a refetch.
+const readTasksCache = (params) => {
+  const { tasksCache, taskVersion } = useTaskStore.getState()
+  return tasksCache &&
+    tasksCache.key === tasksKey(params) &&
+    tasksCache.version === taskVersion
+    ? tasksCache
+    : null
+}
+
 export default function useTasks() {
-  const taskVersion         = useTaskStore((s) => s.taskVersion)
-  const clearDashboardStats = useTaskStore((s) => s.clearDashboardStats)
+  const taskVersion          = useTaskStore((s) => s.taskVersion)
+  const clearDashboardStats  = useTaskStore((s) => s.clearDashboardStats)
+  const incrementTaskVersion = useTaskStore((s) => s.incrementTaskVersion)
+  const setTasksCache        = useTaskStore((s) => s.setTasksCache)
 
   const location = useLocation()
-
-  // ── Data ─────────────────────────────────────────────────────────────────────
-  const [tasks,   setTasks]   = useState([])
-  const [loading, setLoading] = useState(true)
-  const [total,   setTotal]   = useState(0)
 
   // ── Filters ───────────────────────────────────────────────────────────────────
   const [search,   setSearch]   = useState(() => {
@@ -25,6 +36,14 @@ export default function useTasks() {
   const [category, setCategory] = useState('')
   const [sort,     setSort]     = useState('due_date')
   const [page,     setPage]     = useState(1)
+
+  // ── Data ─────────────────────────────────────────────────────────────────────
+  // Seed from cache on mount — revisiting with the same params and no task
+  // changes since shows the list instantly, no loading state.
+  const seeded = readTasksCache({ search, status, priority, category, sort, page })
+  const [tasks,   setTasks]   = useState(seeded?.tasks ?? [])
+  const [total,   setTotal]   = useState(seeded?.total ?? 0)
+  const [loading, setLoading] = useState(!seeded)
 
   // ── Selection ─────────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState([])
@@ -67,6 +86,17 @@ export default function useTasks() {
 
   // ── Fetch ─────────────────────────────────────────────────────────────────────
   const fetchTasks = useCallback(async () => {
+    const key = { search, status, priority, category, sort, page }
+
+    // Cache hit — same params, no task mutation since: reuse, skip the network.
+    const cached = readTasksCache(key)
+    if (cached) {
+      setTasks(cached.tasks)
+      setTotal(cached.total)
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     try {
       const params = { page, limit: PER_PAGE }
@@ -76,14 +106,22 @@ export default function useTasks() {
       if (category) params.category = category
       if (sort)     params.sort     = sort
       const res = await getTasks(params)
-      setTasks(res.data.tasks || [])
-      setTotal(res.data.total || res.data.tasks?.length || 0)
+      const list = res.data.tasks || []
+      const tot  = res.data.total || res.data.tasks?.length || 0
+      setTasks(list)
+      setTotal(tot)
+      setTasksCache({
+        key: tasksKey(key),
+        version: useTaskStore.getState().taskVersion,
+        tasks: list,
+        total: tot,
+      })
     } catch (err) {
       console.error(err)
     } finally {
       setLoading(false)
     }
-  }, [search, status, priority, category, sort, page, taskVersion])
+  }, [search, status, priority, category, sort, page, taskVersion, setTasksCache])
 
   useEffect(() => { fetchTasks() }, [fetchTasks])
   useEffect(() => { setPage(1); setSelected([]) }, [search, status, priority, category, sort])
@@ -103,19 +141,22 @@ export default function useTasks() {
   const toggleOne    = (id) => setSelected((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id])
 
   // ── Bulk actions ──────────────────────────────────────────────────────────────
+  // Mutations bump taskVersion: it invalidates this cache (so the effect
+  // refetches once) and the board / dashboard caches too — keeping every view
+  // in sync instead of refetching the table directly.
   const bulkAction = async (action, extra = {}) => {
     try {
       await bulkActionService(selected, action, extra)
       clearDashboardStats()
       setSelected([])
-      fetchTasks()
+      incrementTaskVersion()
     } catch (err) { console.error(err) }
   }
 
   // ── Per-task actions ──────────────────────────────────────────────────────────
   const handleStatusChange = async (taskId, newStatus) => {
     setOpenDropdownId(null)
-    try { await updateTask(taskId, { status: newStatus }); clearDashboardStats(); fetchTasks() }
+    try { await updateTask(taskId, { status: newStatus }); clearDashboardStats(); incrementTaskVersion() }
     catch (err) { console.error(err) }
   }
 
@@ -124,14 +165,14 @@ export default function useTasks() {
     try {
       await updateTask(taskId, { priority: newPriority === 'none' ? null : newPriority })
       clearDashboardStats()
-      fetchTasks()
+      incrementTaskVersion()
     } catch (err) { console.error(err) }
   }
 
   const handleDeleteTask = async (taskId) => {
     setOpenDropdownId(null)
     if (!window.confirm('Delete this task? This cannot be undone.')) return
-    try { await deleteTask(taskId); clearDashboardStats(); fetchTasks() }
+    try { await deleteTask(taskId); clearDashboardStats(); incrementTaskVersion() }
     catch (err) { console.error(err) }
   }
 
